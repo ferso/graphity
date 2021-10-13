@@ -18,10 +18,10 @@ afterAll(async () => {
 });
 
 describe("ServerApi tests", () => {
-  it("should test ServerApi run", async () => {
+  it("should test HTTP Server run", async () => {
     request(App.getHTTPServerInstance()).get("/").expect(200);
   });
-  it("should test GraphServer run", async () => {
+  it("should test Graph Server run", async () => {
     let graphServer = App.getGraphServerInstance();
     const result = await graphServer.executeOperation({
       query: "query{test}",

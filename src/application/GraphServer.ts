@@ -1,6 +1,6 @@
 import { Express } from "express";
 import Http from "http";
-import { GraphQLSchema, execute, subscribe } from "graphql";
+import { GraphQLSchema, execute, subscribe, DocumentNode } from "graphql";
 import { ApolloServer, gql } from "apollo-server-express";
 import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
 import { SubscriptionServer } from "subscriptions-transport-ws";
@@ -22,32 +22,9 @@ export class GraphServer {
   private subscriptionServer: SubscriptionServer;
   private pubsub: PubSub;
   currentNumber = 0;
-  private typeDefs = gql`
-    type Query {
-      test: Boolean
-    }
-    type Query {
-      currentNumber: Int
-    }
 
-    type Subscription {
-      numberIncremented: Int
-    }
-  `;
-  private resolvers = {
-    Query: {
-      test: () => true,
-      currentNumber() {
-        return this.currentNumber;
-      },
-    },
-
-    Subscription: {
-      numberIncremented: {
-        subscribe: () => this.pubsub.asyncIterator(["NUMBER_INCREMENTED"]),
-      },
-    },
-  };
+  private typeDefs: DocumentNode;
+  private resolvers: any;
   setPubSub() {
     this.pubsub = new PubSub();
   }
@@ -59,7 +36,36 @@ export class GraphServer {
     this.app = app;
   }
 
+  private createDefaultScheme() {
+    this.typeDefs = gql`
+      type Query {
+        test: Boolean
+      }
+      type Query {
+        currentNumber: Int
+      }
+
+      type Subscription {
+        numberIncremented: Int
+      }
+    `;
+    this.resolvers = {
+      Query: {
+        test: () => true,
+        currentNumber() {
+          return this.currentNumber;
+        },
+      },
+
+      Subscription: {
+        numberIncremented: {
+          subscribe: () => this.pubsub.asyncIterator(["NUMBER_INCREMENTED"]),
+        },
+      },
+    };
+  }
   private async setSchema() {
+    this.createDefaultScheme();
     this.schema = makeExecutableSchema({
       typeDefs: this.typeDefs,
       resolvers: this.resolvers,

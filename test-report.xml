@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testExecutions version="1">
   <file path="/Volumes/Projects/Projects/graphity/tests/application/ServerApi.test.ts">
-    <testCase name="ServerApi tests should test ServerApi run" duration="4"/>
-    <testCase name="ServerApi tests should test GraphServer run" duration="7"/>
+    <testCase name="ServerApi tests should test HTTP Server run" duration="4"/>
+    <testCase name="ServerApi tests should test Graph Server run" duration="7"/>
   </file>
 </testExecutions>
