@@ -33,7 +33,7 @@
   "scripts": {
     "dev": "nodemon src/main.ts",
     "build": "tsc",
-    "test": "jest --detectOpenHandles --testTimeout=50000"
+    "test": "ENV=test jest --detectOpenHandles --testTimeout=50000"
   },
   "_moduleAliases": {
     "@core": "src/core",
