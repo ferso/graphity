@@ -11,7 +11,7 @@ const loadenv = () => {
   if (fs.existsSync(envFile)) {
     try {
       envConfig = dotenv.parse(fs.readFileSync(envFile));
-      global.Logger.debug("Enviroment file loaded ");
+      global.Logger.warn("Enviroment file loaded ");
       for (const k in envConfig) {
         process.env[k] = envConfig[k];
       }
