@@ -3,6 +3,8 @@ import http from "http";
 import cors from "cors";
 import helmet from "helmet";
 import csrf from "csurf";
+import cookieParser from "cookie-parser";
+import session from "express-session";
 
 declare module "http" {
   interface IncomingMessage {
@@ -16,6 +18,7 @@ export class HttpServer {
   private readonly port?: number = Number(process.env.HTTP_PORT);
   private readonly upload_limit?: string = process.env.HTTP_UPLOAD_LIMIT;
   private readonly env?: string = process.env.NODE_ENV;
+  private readonly secret: string = process.env.SECRET_SESSION || "secret";
   private app: Express;
   private server: http.Server;
 
@@ -48,7 +51,15 @@ export class HttpServer {
     );
   }
   private secure() {
-    this.app.use(csrf({ cookie: true }));
+    this.app.use(
+      session({
+        secret: this.secret,
+        resave: false,
+        saveUninitialized: false,
+      })
+    );
+    this.app.use(cookieParser());
+    this.app.use(csrf());
     this.app.use(
       helmet({
         contentSecurityPolicy: this.env === "production" ? undefined : false,
