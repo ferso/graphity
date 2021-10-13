@@ -2,6 +2,7 @@ import express, { Express } from "express";
 import http from "http";
 import cors from "cors";
 import helmet from "helmet";
+import csrf from "csurf";
 
 declare module "http" {
   interface IncomingMessage {
@@ -47,6 +48,7 @@ export class HttpServer {
     );
   }
   private secure() {
+    this.app.use(csrf({ cookie: true }));
     this.app.use(
       helmet({
         contentSecurityPolicy: this.env === "production" ? undefined : false,
