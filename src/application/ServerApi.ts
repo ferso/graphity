@@ -46,19 +46,19 @@ export class ServerApi {
     }
   }
 
-  public getHTTPServer(): Http.Server {
+  public getHTTPServerInstance(): Http.Server {
     return this.server;
   }
-  public getGraphServer(): ApolloServer {
+  public getGraphServerInstance(): ApolloServer {
     return this.graphServer;
   }
-  public setHTTPServer(server: Http.Server) {
+  public setHTTPServerInstance(server: Http.Server) {
     this.server = server;
   }
-  public setExpressApp(app: Express) {
+  public setExpressAppInstance(app: Express) {
     this.app = app;
   }
-  public setGraphServer(graphServer: ApolloServer) {
+  public setGraphServerInstance(graphServer: ApolloServer) {
     this.graphServer = graphServer;
   }
   //Start HTTP SERVER
@@ -66,8 +66,8 @@ export class ServerApi {
     const HttpApp: HttpServer = HttpServer.getInstance();
     await HttpApp.run();
 
-    this.setExpressApp(HttpApp.getApp());
-    this.setHTTPServer(HttpApp.getServer());
+    this.setExpressAppInstance(HttpApp.getApp());
+    this.setHTTPServerInstance(HttpApp.getServer());
   }
 
   //Start GRAPH SERVER
@@ -76,14 +76,14 @@ export class ServerApi {
     GraphApp.setExpressApp(this.app);
     GraphApp.setHTTPServer(this.server);
     await GraphApp.run();
-    this.setGraphServer(GraphApp.getServerInstance());
+    this.setGraphServerInstance(GraphApp.getServerInstance());
   }
   startORM() {}
   startSockets() {}
   startTCP() {}
   startControllers() {}
 
-  public static getInstance(): ServerApi {
+  public static create(): ServerApi {
     if (!ServerApi.instance) {
       ServerApi.instance = new ServerApi();
     }

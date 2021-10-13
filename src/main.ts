@@ -12,7 +12,7 @@ import { ServerApi } from "@application/ServerApi";
 })();
 
 async function runApplication(): Promise<void> {
-  const App: ServerApi = ServerApi.getInstance();
+  const App: ServerApi = ServerApi.create();
   await App.start({
     http: true,
     graph: true,
