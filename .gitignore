@@ -48,4 +48,3 @@ build/Release
 
 # dotenv environment variables file
 .env
-.env.test
