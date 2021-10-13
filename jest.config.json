@@ -3,7 +3,6 @@
   "rootDir": ".",
   "verbose": true,
   "testEnvironment": "node",
-  "testRegex": "./test/.*.spec.ts$",
   "coverageReporters": ["json-summary", "text", "lcov"],
   "coverageDirectory": ".coverage",
   "collectCoverageFrom": ["src/**/*.ts"],

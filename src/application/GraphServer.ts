@@ -128,6 +128,10 @@ export class GraphServer {
     );
   }
 
+  public getServerInstance() {
+    return this.graphServer;
+  }
+
   public async run() {
     await this.setSchema();
     await this.setSuscriptionServer();

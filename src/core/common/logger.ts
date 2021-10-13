@@ -5,6 +5,7 @@ declare global {
 
 class LoggerInstance {
   private static instance: LoggerInstance;
+  private level = process.env.LOG_LEVEL;
 
   public run(): winston.Logger {
     const logger: winston.Logger = winston.createLogger({
@@ -22,7 +23,7 @@ class LoggerInstance {
       ),
       transports: [
         new winston.transports.Console({
-          level: process.env.LOG_LEVEL || "debug",
+          level: this.level || "silly",
         }),
       ],
     });
