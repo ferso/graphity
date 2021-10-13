@@ -31,6 +31,7 @@
   },
   "scripts": {
     "dev": "nodemon src/main.ts",
+    "build": "tsc",
     "test": "jest --detectOpenHandles --testTimeout=50000"
   },
   "_moduleAliases": {
