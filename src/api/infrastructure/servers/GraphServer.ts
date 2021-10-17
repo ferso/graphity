@@ -6,22 +6,33 @@ import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
 import { SubscriptionServer } from "subscriptions-transport-ws";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { PubSub } from "graphql-subscriptions";
+import { HttpServer } from "./HttpServer";
+import { Container, Service } from "typedi";
 
-import { graphqlUploadExpress } from "graphql-upload";
-import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
-import { GraphQLSchemaContext } from "apollo-server-types";
+// import { graphqlUploadExpress } from "graphql-upload";
+// import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
+// import { GraphQLSchemaContext } from "apollo-server-types";
 
+@Service()
 export class GraphServer {
-  private static instance: GraphServer;
   private app: Express;
   private server: Http.Server;
   private readonly env?: string = process.env.NODE_ENV;
+  private readonly port?: string = process.env.HTTP_PORT;
+  private readonly socketEndpoint?: string =
+    process.env.GRAPH_SOCKET_ENDPOINT || "/sockets";
+
   private readonly endpoint?: string = process.env.GRAPH_ENDPOINT;
   private graphServer: ApolloServer;
   private schema: GraphQLSchema;
   private subscriptionServer: SubscriptionServer;
   private pubsub: PubSub;
   currentNumber = 0;
+
+  constructor(private readonly HttpServer: HttpServer) {
+    this.app = this.HttpServer.getApp();
+    this.server = this.HttpServer.getServer();
+  }
 
   private typeDefs: DocumentNode;
   private resolvers: any;
@@ -105,36 +116,41 @@ export class GraphServer {
     });
     await this.graphServer.start();
   }
-
   private async attachGraphServer() {
     this.graphServer.applyMiddleware({
       app: this.app,
       path: `${this.endpoint}`,
     });
   }
-
   private async setSuscriptionServer() {
     this.setPubSub();
-    this.subscriptionServer = SubscriptionServer.create(
-      {
-        schema: this.schema,
-        execute,
-        subscribe,
-        onConnect(connectionParams: any, webSocket: any, context: any) {
-          console.log("Connected!");
+    try {
+      this.subscriptionServer = SubscriptionServer.create(
+        {
+          schema: this.schema,
+          execute,
+          subscribe,
+          onConnect(connectionParams: any, webSocket: any, context: any) {
+            // console.log("Connected!");
+          },
+          onDisconnect(webSocket: any, context: any) {
+            // console.log("Disconnected!");
+          },
         },
-        onDisconnect(webSocket: any, context: any) {
-          console.log("Disconnected!");
-        },
-      },
-      {
-        server: this.server,
-        path: "/sockets",
-      }
-    );
+        {
+          server: this.server,
+          path: this.socketEndpoint,
+        }
+      );
+    } catch (error: any) {
+      global.Logger.error(error.message);
+      throw Error(
+        "Trying to start Graph Socket Server, but something happened"
+      );
+    }
   }
 
-  public getServerInstance() {
+  public getServer() {
     return this.graphServer;
   }
 
@@ -143,20 +159,24 @@ export class GraphServer {
     await this.setSuscriptionServer();
     await this.initServer();
     await this.attachGraphServer();
+    this.logHTPP();
+    this.logSocket();
   }
-  private log(): void {
-    globalThis.Logger.warn(`Graphql module initialized`);
+  private logHTPP(): void {
+    globalThis.Logger.info(
+      `Graphql query module initialized at http://localhost:${this.port}${this.endpoint}`
+    );
+  }
+
+  private logSocket(): void {
+    globalThis.Logger.info(
+      `Graphql suscriptions module initialized at ws://localhost:${this.port}${this.socketEndpoint}`
+    );
   }
 
   private logError(): void {
-    globalThis.Logger.error(
-      `Graphql module no initialized, no scheme was found`
-    );
-  }
-  public static getInstance(): GraphServer {
-    if (!GraphServer.instance) {
-      GraphServer.instance = new GraphServer();
-    }
-    return GraphServer.instance;
+    // globalThis.Logger.error(
+    //   `Graphql module no initialized, no scheme was found`
+    // );
   }
 }

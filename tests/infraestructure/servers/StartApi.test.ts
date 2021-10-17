@@ -1,18 +1,18 @@
+import "reflect-metadata";
 import "module-alias/register";
-import "@core/common/logger";
 import "@core/common/loadenv";
+import "@core/common/logger";
 import request from "supertest";
-import { ServerApi } from "../../src/application/ServerApi";
-
-let App: ServerApi;
+import { StartApi } from "@infra/servers/StartApi";
+import Container from "typedi";
+let App: StartApi;
 beforeAll(async () => {
-  App = ServerApi.create();
+  App = Container.get(StartApi);
   await App.start({
     http: true,
     graph: true,
   });
 });
-
 afterAll(async () => {
   await App.stop();
 });

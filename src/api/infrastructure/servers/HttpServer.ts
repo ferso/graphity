@@ -1,10 +1,14 @@
-import express, { Express } from "express";
+import fs from "fs";
 import http from "http";
 import cors from "cors";
+import path from "path";
 import helmet from "helmet";
 import csrf from "csurf";
+import express, { Express } from "express";
 import cookieParser from "cookie-parser";
 import session from "express-session";
+import { Service } from "typedi";
+import { IControllerAction } from "@core/interfaces/iControllerAction";
 
 declare module "http" {
   interface IncomingMessage {
@@ -12,9 +16,8 @@ declare module "http" {
     orm: any;
   }
 }
-
+@Service()
 export class HttpServer {
-  private static instance: HttpServer;
   private readonly port?: number = Number(process.env.HTTP_PORT);
   private readonly upload_limit?: string = process.env.HTTP_UPLOAD_LIMIT;
   private readonly env?: string = process.env.NODE_ENV;
@@ -22,13 +25,13 @@ export class HttpServer {
   private app: Express;
   private server: http.Server;
 
+  private controllersPath: string = path.resolve(
+    "src/api/presenters/controllers"
+  );
+
   private setExpressApp() {
     this.app = express();
   }
-  private setHTTPServer() {
-    this.server = http.createServer(this.app);
-  }
-
   private cors() {
     this.app.use(cors());
   }
@@ -59,43 +62,59 @@ export class HttpServer {
       })
     );
     this.app.use(cookieParser());
-    this.app.use(csrf());
+    // this.app.use(csrf());
     this.app.use(
       helmet({
         contentSecurityPolicy: this.env === "production" ? undefined : false,
       })
     );
   }
-
   public getServer() {
     return this.server;
   }
-
   public getApp() {
     return this.app;
   }
-
   async listen() {
-    await this.server.listen(this.port);
+    this.server = await this.app.listen(this.port);
+  }
+  controllers() {
+    if (fs.existsSync(this.controllersPath)) {
+      fs.readdirSync(this.controllersPath).forEach((controller) => {
+        const controllerDirectory = path.join(this.controllersPath, controller);
+        if (fs.lstatSync(controllerDirectory).isDirectory()) {
+          fs.readdirSync(controllerDirectory).forEach(async (action: any) => {
+            const actionPath = path.join(controllerDirectory, action);
+            const actionFunction = await import(actionPath);
+            const defaultAction = actionFunction.default;
+            if (defaultAction) {
+              action = defaultAction.action;
+              if (action instanceof Function) {
+                const { method, uri, actionFunction } = action();
+                // @ts-ignore
+                this.app[method](uri, actionFunction);
+              }
+            }
+          });
+        }
+      });
+    } else {
+      global.Logger.info(
+        "Controllers path does not exist in the directory tree"
+      );
+    }
   }
   async run() {
     this.setExpressApp();
-    this.setHTTPServer();
     this.cors();
     this.encode();
     this.parser();
     this.secure();
     this.listen();
+    this.controllers();
     this.log();
   }
-
   private log(): void {
-    globalThis.Logger.warn(`Server started at http://localhost:${this.port}`);
-  }
-  public static getInstance(): HttpServer {
-    if (!HttpServer.instance) {
-      HttpServer.instance = new HttpServer();
-    }
-    return HttpServer.instance;
+    globalThis.Logger.info(`Server started at http://localhost:${this.port}`);
   }
 }

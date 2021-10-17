@@ -2,12 +2,13 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDirs": ["./src", "./tests"],
-    "baseUrl": "./",
+    "baseUrl": ".",
     "paths": {
-      "@core/*": ["./src/core/*"],
-      "@infrastructure/*": ["./src/infrastructure/*"],
-      "@application/*": ["./src/application/*"],
-      "@test/*": ["tests/*"]
+      "@core/*": ["./src/api/core/*"],
+      "@infra/*": ["./src/api/infrastructure/*"],
+      "@application/*": ["./src/api/application/*"],
+      "@presenters/*": ["./src/api/presenters/*"],
+      "@tests/*": ["tests/*"]
     },
     "target": "ES2020",
     "module": "commonjs",
@@ -26,6 +27,6 @@
     "declaration": true
   },
   "compileOnSave": true,
-  "include": ["src/**/*.ts", "tests/*.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
   "exclude": ["node_modules", "<node_internals>/**", "bin/**"]
 }

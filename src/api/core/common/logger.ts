@@ -1,15 +1,24 @@
+import Container, { Service } from "typedi";
 import * as winston from "winston";
 declare global {
   var Logger: winston.Logger;
 }
 
-class LoggerInstance {
+@Service()
+export class LoggerInstance {
   private static instance: LoggerInstance;
-  private level = process.env.LOG_LEVEL;
+  private level: string = "silly";
 
-  public run(): winston.Logger {
+  public setLevel(level?: string) {
+    if (level) {
+      this.level = level;
+    }
+    return this;
+  }
+  public run() {
     const logger: winston.Logger = winston.createLogger({
       silent: false,
+      level: this.level,
       format: winston.format.combine(
         winston.format.splat(),
         winston.format.simple(),
@@ -30,14 +39,6 @@ class LoggerInstance {
     global.Logger = logger;
     return logger;
   }
-
-  public static getInstance(): LoggerInstance {
-    if (!LoggerInstance.instance) {
-      LoggerInstance.instance = new LoggerInstance();
-    }
-    return LoggerInstance.instance;
-  }
 }
-const LoggerCore = LoggerInstance.getInstance();
-export const Logger = LoggerCore.run();
-export default Logger;
+
+Container.get(LoggerInstance).run();
