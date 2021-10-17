@@ -1,5 +1,5 @@
 import { method } from "@core/decorators/method";
-import { AControllerAction } from "@core/interfaces/iControllerAction";
+import { AControllerAction } from "@core/interfaces/IControllerAction";
 import { Request, Response } from "express";
 import { Service } from "typedi";
 
