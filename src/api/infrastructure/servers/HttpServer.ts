@@ -8,7 +8,6 @@ import express, { Express } from "express";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import { Service } from "typedi";
-import { IControllerAction } from "@core/interfaces/iControllerAction";
 
 declare module "http" {
   interface IncomingMessage {
