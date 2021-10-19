@@ -18,7 +18,7 @@ export class LoadEnviroment {
     let envConfig: any = dotenv.config();
     let envFile = path.resolve(`.env.${process.env.ENV}`);
     if (fs.existsSync(envFile)) {
-      global.Logger.warn(`Enviroment filed loaded`);
+      global.Logger.info(`Enviroment filed loaded: .env.${process.env.ENV}`);
       try {
         envConfig = dotenv.parse(fs.readFileSync(envFile));
         for (const k in envConfig) {

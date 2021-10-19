@@ -1,14 +1,13 @@
+import { ServiceDi } from "@application/di/service";
 import { method } from "@core/decorators/method";
-import { AControllerAction } from "@core/interfaces/IControllerAction";
+import { IControllerAction } from "@core/interfaces/IControllerAction";
 import { Request, Response, Router } from "express";
-import { Service } from "typedi";
 
-@Service()
-class ControllerAction extends AControllerAction {
-  @method({ method: "get", route: "/hola" })
+@ServiceDi()
+class ControllerAction implements IControllerAction {
+  @method({ method: "post", route: "/hola" })
   action(req: Request, res: Response) {
     res.json({ message: "hola" });
   }
 }
-
 export default new ControllerAction();

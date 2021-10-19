@@ -1,6 +1,7 @@
 import { HttpServer } from "@infra/servers/HttpServer";
 import { GraphServer } from "@infra/servers/GraphServer";
-import { Container, Service } from "typedi";
+import { ContainerDi } from "@application/di/container";
+import { ServiceDi } from "@application/di/service";
 
 export interface StartApiConfig {
   http?: boolean;
@@ -9,7 +10,7 @@ export interface StartApiConfig {
   tcp?: boolean;
   controllers?: boolean;
 }
-@Service()
+@ServiceDi()
 export class StartApi {
   private static instance: StartApi;
   private HttpApp: HttpServer;
@@ -22,7 +23,6 @@ export class StartApi {
       graph: false,
       sockets: false,
       tcp: false,
-      controllers: false,
     };
     return { ...init, ...config };
   }
@@ -52,12 +52,12 @@ export class StartApi {
   }
   //Start HTTP SERVER
   private async startHTTP() {
-    this.HttpApp = Container.get(HttpServer);
+    this.HttpApp = ContainerDi.get(HttpServer);
     await this.HttpApp.run();
   }
   //Start GRAPH SERVER
   async startGraph() {
-    this.GraphApp = Container.get(GraphServer);
+    this.GraphApp = ContainerDi.get(GraphServer);
     await this.GraphApp.run();
   }
   startORM() {}

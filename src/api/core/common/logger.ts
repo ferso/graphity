@@ -1,10 +1,11 @@
-import Container, { Service } from "typedi";
 import * as winston from "winston";
+import { ContainerDi } from "@application/di/container";
+import { ServiceDi } from "@application/di/service";
 declare global {
   var Logger: winston.Logger;
 }
 
-@Service()
+@ServiceDi()
 export class LoggerInstance {
   private static instance: LoggerInstance;
   private level: string = "silly";
@@ -41,4 +42,4 @@ export class LoggerInstance {
   }
 }
 
-Container.get(LoggerInstance).run();
+ContainerDi.get(LoggerInstance).run();

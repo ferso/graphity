@@ -4,10 +4,11 @@ import "@core/common/loadenv";
 import "@core/common/logger";
 import request from "supertest";
 import { StartApi } from "@infra/servers/StartApi";
-import Container from "typedi";
+import { ContainerDi } from "@application/di/container";
+
 let App: StartApi;
 beforeAll(async () => {
-  App = Container.get(StartApi);
+  App = ContainerDi.get(StartApi);
   await App.start({
     http: true,
     graph: true,

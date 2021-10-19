@@ -3,11 +3,12 @@ import http from "http";
 import cors from "cors";
 import path from "path";
 import helmet from "helmet";
-import csrf from "csurf";
 import express, { Express } from "express";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import { Service } from "typedi";
+import { ServiceDi } from "@application/di/service";
+import { InjectDi } from "@application/di/inject";
+import { IAppConfig } from "@core/interfaces/IAppConfig";
 
 declare module "http" {
   interface IncomingMessage {
@@ -15,18 +16,25 @@ declare module "http" {
     orm: any;
   }
 }
-@Service()
+@ServiceDi()
 export class HttpServer {
-  private readonly port?: number = Number(process.env.HTTP_PORT);
-  private readonly upload_limit?: string = process.env.HTTP_UPLOAD_LIMIT;
-  private readonly env?: string = process.env.NODE_ENV;
-  private readonly secret: string = process.env.SECRET_SESSION || "secret";
+  private readonly port: number;
+  private readonly upload_limit;
+  private readonly env: string;
+  private readonly secretCsrf;
   private app: Express;
   private server: http.Server;
 
   private controllersPath: string = path.resolve(
     "src/api/presenters/controllers"
   );
+
+  constructor(@InjectDi("config") private readonly config: IAppConfig) {
+    this.env = config.env;
+    this.port = config.http.port;
+    this.secretCsrf = config.http.secretCsrf;
+    this.upload_limit = config.http.uploadLimit;
+  }
 
   private setExpressApp() {
     this.app = express();
@@ -51,17 +59,18 @@ export class HttpServer {
         },
       })
     );
+    this.app.use(cookieParser());
   }
-  private secure() {
+  private session() {
     this.app.use(
       session({
-        secret: this.secret,
+        secret: this.secretCsrf,
         resave: false,
         saveUninitialized: false,
       })
     );
-    this.app.use(cookieParser());
-    // this.app.use(csrf());
+  }
+  private protection() {
     this.app.use(
       helmet({
         contentSecurityPolicy: this.env === "production" ? undefined : false,
@@ -98,7 +107,7 @@ export class HttpServer {
         }
       });
     } else {
-      global.Logger.info(
+      global.Logger.warn(
         "Controllers path does not exist in the directory tree"
       );
     }
@@ -108,12 +117,13 @@ export class HttpServer {
     this.cors();
     this.encode();
     this.parser();
-    this.secure();
+    this.session();
+    this.protection();
     this.listen();
     this.controllers();
     this.log();
   }
   private log(): void {
-    globalThis.Logger.info(`Server started at http://localhost:${this.port}`);
+    globalThis.Logger.warn(`Server started at http://localhost:${this.port}`);
   }
 }

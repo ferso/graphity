@@ -1,9 +1,9 @@
 import { method } from "@core/decorators/method";
-import { AControllerAction } from "@core/interfaces/IControllerAction";
+import { IControllerAction } from "@core/interfaces/IControllerAction";
 import { Request, Response, Router } from "express";
 import { Service } from "typedi";
 @Service()
-class ControllerAction extends AControllerAction {
+class ControllerAction implements IControllerAction {
   @method({ method: "get", route: "/hola/:id" })
   action(req: Request, res: Response) {
     console.log();

@@ -1,43 +1,68 @@
 import { Express } from "express";
 import Http from "http";
+import fs from "fs";
+import path from "path";
+
 import { GraphQLSchema, execute, subscribe, DocumentNode } from "graphql";
 import { ApolloServer, gql } from "apollo-server-express";
 import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
 import { SubscriptionServer } from "subscriptions-transport-ws";
-import { makeExecutableSchema } from "@graphql-tools/schema";
+import { buildSchema } from "type-graphql";
 import { PubSub } from "graphql-subscriptions";
 import { HttpServer } from "./HttpServer";
-import { Container, Service } from "typedi";
-
+import { ServiceDi } from "@application/di/service";
+import { InjectDi } from "@application/di/inject";
+import { IAppConfig } from "@core/interfaces/IAppConfig";
+import { RedisPubSub } from "graphql-redis-subscriptions";
+import Redis from "ioredis";
 // import { graphqlUploadExpress } from "graphql-upload";
-// import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
-// import { GraphQLSchemaContext } from "apollo-server-types";
 
-@Service()
+@ServiceDi()
 export class GraphServer {
   private app: Express;
   private server: Http.Server;
-  private readonly env?: string = process.env.NODE_ENV;
-  private readonly port?: string = process.env.HTTP_PORT;
-  private readonly socketEndpoint?: string =
-    process.env.GRAPH_SOCKET_ENDPOINT || "/sockets";
+  private readonly env: string;
+  private readonly host: string;
+  private readonly port: number;
+  private readonly socketEndpoint: string;
 
   private readonly endpoint?: string = process.env.GRAPH_ENDPOINT;
   private graphServer: ApolloServer;
   private schema: GraphQLSchema;
   private subscriptionServer: SubscriptionServer;
-  private pubsub: PubSub;
-  currentNumber = 0;
+  private pubsub: RedisPubSub;
+  private redisHost: string;
+  private redisPort: number;
 
-  constructor(private readonly HttpServer: HttpServer) {
+  private resolversPath: string = path.resolve("src/api/presenters/resolvers");
+
+  constructor(
+    @InjectDi("config") private readonly config: IAppConfig,
+    private readonly HttpServer: HttpServer
+  ) {
     this.app = this.HttpServer.getApp();
     this.server = this.HttpServer.getServer();
+    this.redisHost = config.redis.host;
+    this.redisPort = config.redis.port;
+    this.env = config.env;
+    this.host = config.http.host;
+    this.port = config.http.port;
+    this.endpoint = config.graph.endpoint;
+    this.socketEndpoint = config.graph.socketEndpoint;
   }
 
-  private typeDefs: DocumentNode;
-  private resolvers: any;
-  setPubSub() {
-    this.pubsub = new PubSub();
+  async setPubSub() {
+    const options = {
+      host: this.redisHost,
+      port: this.redisPort,
+      retryStrategy: (times: any) => {
+        return Math.min(times * 50, 2000);
+      },
+    };
+    this.pubsub = new RedisPubSub({
+      publisher: new Redis(options),
+      subscriber: new Redis(options),
+    });
   }
 
   public setHTTPServer(server: Http.Server) {
@@ -47,51 +72,29 @@ export class GraphServer {
     this.app = app;
   }
 
-  private createDefaultScheme() {
-    this.typeDefs = gql`
-      type Query {
-        test: Boolean
-      }
-      type Query {
-        currentNumber: Int
-      }
-
-      type Subscription {
-        numberIncremented: Int
-      }
-    `;
-    this.resolvers = {
-      Query: {
-        test: () => true,
-        currentNumber() {
-          return this.currentNumber;
-        },
-      },
-
-      Subscription: {
-        numberIncremented: {
-          subscribe: () => this.pubsub.asyncIterator(["NUMBER_INCREMENTED"]),
-        },
-      },
-    };
+  private async loadResolvers() {
+    if (fs.existsSync(this.resolversPath)) {
+      let allFiles = fs
+        .readdirSync(this.resolversPath)
+        .map(async (resolver) => {
+          if (resolver.includes("resolver")) {
+            const directory = path.join(this.resolversPath, resolver);
+            if (!fs.lstatSync(directory).isDirectory()) {
+              let instance = await import(directory);
+              return instance.default;
+            }
+          }
+        });
+      return await Promise.all(allFiles);
+    }
   }
   private async setSchema() {
-    this.createDefaultScheme();
-    this.schema = makeExecutableSchema({
-      typeDefs: this.typeDefs,
-      resolvers: this.resolvers,
+    const resolvers: any = await this.loadResolvers();
+    this.schema = await buildSchema({
+      resolvers: resolvers,
+      emitSchemaFile: true,
+      pubSub: this.pubsub,
     });
-  }
-
-  incrementNumber() {
-    this.currentNumber++;
-    this.pubsub.publish("NUMBER_INCREMENTED", {
-      numberIncremented: this.currentNumber,
-    });
-
-    setTimeout(() => {
-      this.incrementNumber();
-    }, 2000);
   }
 
   async initServer() {
@@ -119,11 +122,10 @@ export class GraphServer {
   private async attachGraphServer() {
     this.graphServer.applyMiddleware({
       app: this.app,
-      path: `${this.endpoint}`,
+      path: this.endpoint,
     });
   }
   private async setSuscriptionServer() {
-    this.setPubSub();
     try {
       this.subscriptionServer = SubscriptionServer.create(
         {
@@ -149,12 +151,11 @@ export class GraphServer {
       );
     }
   }
-
   public getServer() {
     return this.graphServer;
   }
-
   public async run() {
+    await this.setPubSub();
     await this.setSchema();
     await this.setSuscriptionServer();
     await this.initServer();
@@ -163,17 +164,15 @@ export class GraphServer {
     this.logSocket();
   }
   private logHTPP(): void {
-    globalThis.Logger.info(
-      `Graphql query module initialized at http://localhost:${this.port}${this.endpoint}`
+    globalThis.Logger.warn(
+      `Graphql query module initialized at //${this.host}:${this.port}${this.endpoint}`
     );
   }
-
   private logSocket(): void {
-    globalThis.Logger.info(
-      `Graphql suscriptions module initialized at ws://localhost:${this.port}${this.socketEndpoint}`
+    globalThis.Logger.warn(
+      `Graphql web socket suscriptions module initialized at //localhost:${this.port}${this.socketEndpoint}`
     );
   }
-
   private logError(): void {
     // globalThis.Logger.error(
     //   `Graphql module no initialized, no scheme was found`

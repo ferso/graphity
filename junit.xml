@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="3" failures="0" errors="0" time="2.699">
-  <testsuite name="ServerApi tests" errors="0" failures="0" skipped="0" timestamp="2021-10-17T06:21:14" time="2.543" tests="2">
-    <testcase classname="ServerApi tests should test HTTP Server run" name="ServerApi tests should test HTTP Server run" time="0.004">
-    </testcase>
-    <testcase classname="ServerApi tests should test Graph Server run" name="ServerApi tests should test Graph Server run" time="0.006">
+<testsuites name="jest tests" tests="5" failures="0" errors="0" time="4.454">
+  <testsuite name="loadEnv test" errors="0" failures="0" skipped="0" timestamp="2021-10-19T05:11:22" time="3.579" tests="1">
+    <testcase classname="loadEnv test should enviroment loaded as test  " name="loadEnv test should enviroment loaded as test  " time="0.002">
     </testcase>
   </testsuite>
-  <testsuite name="loadEnv test" errors="0" failures="0" skipped="0" timestamp="2021-10-17T06:21:17" time="0.036" tests="1">
-    <testcase classname="loadEnv test should enviroment loaded as test  " name="loadEnv test should enviroment loaded as test  " time="0.001">
+  <testsuite name="Logger Tests" errors="0" failures="0" skipped="0" timestamp="2021-10-19T05:11:22" time="3.569" tests="1">
+    <testcase classname="Logger Tests should logger has and enviroment" name="Logger Tests should logger has and enviroment" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="Config Tests" errors="0" failures="0" skipped="0" timestamp="2021-10-19T05:11:22" time="3.722" tests="1">
+    <testcase classname="Config Tests should load config file" name="Config Tests should load config file" time="0.031">
+    </testcase>
+  </testsuite>
+  <testsuite name="ServerApi tests" errors="0" failures="0" skipped="0" timestamp="2021-10-19T05:11:22" time="4.052" tests="2">
+    <testcase classname="ServerApi tests should test HTTP Server run" name="ServerApi tests should test HTTP Server run" time="0.005">
+    </testcase>
+    <testcase classname="ServerApi tests should test Graph Server run" name="ServerApi tests should test Graph Server run" time="0.006">
     </testcase>
   </testsuite>
 </testsuites>
