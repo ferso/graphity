@@ -14,7 +14,7 @@
     "express-session": "^1.17.2",
     "graphql-redis-subscriptions": "^2.4.0",
     "graphql-subscriptions": "^1.2.1",
-    "graphql-upload": "^12.0.0",
+    "graphql-upload": "^15.0.0",
     "helmet": "^4.6.0",
     "ioredis": "^4.28.0",
     "jest-junit": "^13.0.0",
